@@ -377,12 +377,12 @@ var guiders = (function($) {
       }
     }
   
-    guiders._attach(myGuider);
-  
     // You can use an onShow function to take some action before the guider is shown.
     if (myGuider.onShow) {
       myGuider.onShow(myGuider);
     }
+  
+    guiders._attach(myGuider);
   
     myGuider.elem.fadeIn("fast");
   
