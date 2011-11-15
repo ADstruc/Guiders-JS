@@ -44,7 +44,7 @@
 }
 
 .x_button {
-  background-image: url('x_close_button.jpg');
+  background-image: url('/images/guiders/x_close_button.jpg');
   cursor: pointer;
   height: 13px;
   width: 13px;
