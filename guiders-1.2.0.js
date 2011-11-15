@@ -84,7 +84,7 @@ var guiders = (function($) {
       guiderButtonsContainer.append(thisButtonElem);
   
       if (thisButton.onclick) {
-        thisButtonElem.bind("click", thisButton.onclick);
+        thisButtonElem.bind("click", myGuider, thisButton.onclick);
       } else if (!thisButton.onclick &&
                  thisButton.name.toLowerCase() === guiders._closeButtonTitle.toLowerCase()) { 
         thisButtonElem.bind("click", function() { guiders.hideAll(); });
