@@ -38,7 +38,7 @@ var guiders = (function($) {
     position: 0, // 1-12 follows an analog clock, 0 means centered
     title: "Sample title goes here",
     width: 400,
-    xButton: false // this places a closer "x" button in the top right of the guider
+    xButton: true // this places a closer "x" button in the top right of the guider
   };
 
   guiders._htmlSkeleton = [
