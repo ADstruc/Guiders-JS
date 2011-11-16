@@ -278,6 +278,10 @@ var guiders = (function($) {
       return;
     }
     var nextGuiderId = currentGuider.next || null;
+    if (nextGuiderId.indexOf('url:') === 0) {
+      window.location.href = nextGuiderId.substring(4);
+      return;
+    }
     if (nextGuiderId !== null && nextGuiderId !== "") {
       var myGuider = guiders._guiderById(nextGuiderId);
       var omitHidingOverlay = myGuider.overlay ? true : false;
