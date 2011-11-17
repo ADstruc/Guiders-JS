@@ -44,10 +44,14 @@
 }
 
 .x_button {
-  background-image: url('/images/guiders/x_close_button.jpg');
+  background-image: url('/images/help_close_x.png');
   cursor: pointer;
-  height: 13px;
-  width: 13px;
+  height: 17px;
+  width: 17px;
+}
+
+.x_button:hover {
+	background-position: 0px -17px;
 }
 
 .guider_content p {
