@@ -55,7 +55,7 @@ var guiders = (function($) {
     "</div>"
   ].join("");
 
-  guiders._arrowSize = 42; // = arrow's width and height
+  guiders._arrowSize = 26; // = arrow's width and height
   guiders._closeButtonTitle = "Close";
   guiders._currentGuiderID = null;
   guiders._guiders = {};

@@ -23,7 +23,7 @@
 }
 
 .guider_buttons {
-  height: 36px;
+  height: 30px;
   position: relative;
   width: 100%;
 }
@@ -56,8 +56,8 @@
 
 .guider_content p {
   clear: both;
-  color: #333;
   font-size: 13px;
+  padding: 5px 0 10px 0;
 }
 
 .guider_button {
