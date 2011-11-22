@@ -458,7 +458,7 @@ var guiders = (function($) {
 		  myGuider.buttons.push({name: 'Previous'});
 	  }
       if(hasNextButton === false && hasNext === true) {
-		  myGuiders.buttons.push({name: 'Next'});
+		  myGuider.buttons.push({name: 'Next'});
 	  }
       if(hasCloseButton === false && hasNext === false) {
         myGuider.buttons.push({name: 'Close'});
