@@ -357,7 +357,6 @@ var guiders = (function($) {
         myGuider.buttons = [];
       }
 
-      var prevGuider = guiderArray[i - 1];
       var nextGuider = guiderArray[i + 1];
 
       for(var j = 0; j < myGuider.buttons.length; j++) {
@@ -367,12 +366,6 @@ var guiders = (function($) {
            typeof nextGuider.id === 'string' &&
            typeof myGuider.buttons[j].onclick !== 'function') {
           myGuider.next = nextGuider.id;
-        }
-        else if(name === 'prev' && 
-                typeof prevGuider === 'object' &&
-                typeof prevGuider.id === 'string' &&
-                typeof myGuider.buttons[j].onclick !== 'function') {
-          myGuider.prev = prevGuider.id;
         }
       }
 
