@@ -357,59 +357,88 @@ var guiders = (function($) {
    * A way to quickly build an array of guiders, automatically setting next/prev
    * values (as long as there isn't a corresponding onclick function)
    * @param guiderArray array
+   * @param autoNav boolean
    */
-  guiders.createGuiders = function(guiderArray) {
+  guiders.createGuiders = function(guiderArray, autoNav) {
+    if(typeof autoNav === 'undefined') {
+      autoNav = true;
+    }
+	
     var guiderLen = guiderArray.length;
-		
     for(var i = 0; i < guiderLen; i++) {
       var myGuider = guiderArray[i];
+      //If we're not auto generating the nav, just add the guider and continue
+      if(autoNav === false) {
+        guiders.createGuider(myGuider);
+        continue;
+      }
+      
       if(typeof myGuider.buttons !== 'object' || !myGuider.buttons.length) {
         myGuider.buttons = [];
       }
 
-      var prevGuider = guiderArray[i - 1];
-      var nextGuider = guiderArray[i + 1];
+      var prevGuider = guiderArray[i - 1],
+          nextGuider = guiderArray[i + 1],
 	  
-	  var hasNext = typeof nextGuider === 'object';
-	  var hasPrev = typeof prevGuider === 'object';
-	  
-	  //Criteria to see if we should try to auto set the next/prev markers
-	  var searchNext = typeof myGuider.next === 'undefined' &&
-                       hasNext && 
-                       typeof nextGuider.id === 'string';
+	      hasNext = typeof nextGuider === 'object' && typeof nextGuider.id === 'string',
+	      hasPrev = typeof prevGuider === 'object' && typeof prevGuider.id === 'string',
 
-	  var searchPrev = typeof myGuider.prev === 'undefined' &&
-                       hasPrev &&
-                       typeof prevGuider.id === 'string';
+		  customNext = typeof myGuider.next !== 'undefined',
+		  customPrev = typeof myGuider.prev !== 'undefined',
+
+	      hasCloseButton = false,
+          hasNextButton = false,
+          hasPrevButton = false;
 
       var buttonLen = myGuider.buttons.length;
       for(var j = 0; j < buttonLen; j++) {
-        var name = myGuider.buttons[j].name.toLowerCase();
-		
-		//In case there aren't actually next/prev markers, remove the buttons
-		if(name === 'next' && hasNext === false) {
-			myGuider.buttons.splice(j, 1);
-			j--;
-			buttonLen--;
+        var name = myGuider.buttons[j].name.toLowerCase(),
+		    customOnClick = typeof myGuider.buttons[j].onclick === 'function',
+			isNext = false,
+			isPrev = false;
+
+		//Check and see if this guider already has next/prev/close buttons
+        if(name === 'close') {
+          hasCloseButton = isClose = true;
 		}
-		else if(name === 'prev' && hasPrev === false) {
-			myGuider.buttons.splice(j, 1);
-			j--;
-			buttonLen--;
+		else if(name === 'next') {
+          hasNextButton = isNext = true;
+		  customNext = customNext || customOnClick;
 		}
-		
-        if(searchNext && 
-           name === 'next' &&
-           typeof myGuider.buttons[j].onclick !== 'function') {
-          myGuider.next = nextGuider.id;
+		else if(name === 'previous') {
+          hasPrevButton = isPrev = true;
+		  customPrev = customPrev || customOnClick;
+		}
+
+        //In case there aren't actually next/prev guiders, remove the buttons
+        if(isNext && !customNext && !hasNext) {
+            myGuider.buttons.splice(j, 1); j--; buttonLen--; //Remove elem and reset incrementors
         }
-        else if(searchPrev &&
-                name === 'prev' && 
-                typeof myGuider.buttons[j].onclick !== 'function') {
-          myGuider.prev = prevGuider.id;
+        else if(isPrev && !customPrev && !hasPrev) {
+            myGuider.buttons.splice(j, 1); j--; buttonLen--; //Remove elem and reset incrementors
         }
       }
+	  
+	  //If there are next/previous markers and no custom actions, link the buttons
+	  if(hasNext && !customNext) {
+		  myGuider.next = nextGuider.id;
+	  }
+	  if(hasPrev && !customPrev) {
+		  myGuider.prev = prevGuider.id;
+	  }
+	  
+      //If there are missing nav buttons, add them
+      if(hasPrevButton === false && hasPrev === true) {
+		  myGuider.buttons.push({name: 'Previous'});
+	  }
+      if(hasNextButton === false && hasNext === true) {
+		  myGuiders.buttons.push({name: 'Next'});
+	  }
+      if(hasCloseButton === false && hasNext === false) {
+        myGuider.buttons.push({name: 'Close'});
+      }
 
+      //Create the guider
       guiders.createGuider(myGuider);
 	}
   };
