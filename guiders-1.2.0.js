@@ -369,18 +369,42 @@ var guiders = (function($) {
 
       var prevGuider = guiderArray[i - 1];
       var nextGuider = guiderArray[i + 1];
+	  
+	  var hasNext = typeof nextGuider === 'object';
+	  var hasPrev = typeof prevGuider === 'object';
+	  
+	  //Criteria to see if we should try to auto set the next/prev markers
+	  var searchNext = typeof myGuider.next === 'undefined' &&
+                       hasNext && 
+                       typeof nextGuider.id === 'string';
 
-      for(var j = 0; j < myGuider.buttons.length; j++) {
+	  var searchPrev = typeof myGuider.prev === 'undefined' &&
+                       hasPrev &&
+                       typeof prevGuider.id === 'string';
+
+      var buttonLen = myGuider.buttons.length;
+      for(var j = 0; j < buttonLen; j++) {
         var name = myGuider.buttons[j].name.toLowerCase();
-        if(name === 'next' && 
-           typeof nextGuider === 'object' && 
-           typeof nextGuider.id === 'string' &&
+		
+		//In case there aren't actually next/prev markers, remove the buttons
+		if(name === 'next' && hasNext === false) {
+			myGuider.buttons.splice(j, 1);
+			j--;
+			buttonLen--;
+		}
+		else if(name === 'prev' && hasPrev === false) {
+			myGuider.buttons.splice(j, 1);
+			j--;
+			buttonLen--;
+		}
+		
+        if(searchNext && 
+           name === 'next' &&
            typeof myGuider.buttons[j].onclick !== 'function') {
           myGuider.next = nextGuider.id;
         }
-        else if(name === 'prev' && 
-                typeof prevGuider === 'object' &&
-                typeof prevGuider.id === 'string' &&
+        else if(searchPrev &&
+                name === 'prev' && 
                 typeof myGuider.buttons[j].onclick !== 'function') {
           myGuider.prev = prevGuider.id;
         }
