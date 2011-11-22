@@ -352,6 +352,43 @@ var guiders = (function($) {
     
     return guiders;
   }; 
+  
+  /**
+   * A way to quickly build an array of guiders, automatically setting next/prev
+   * values (as long as there isn't a corresponding onclick function)
+   * @param guiderArray array
+   */
+  guiders.createGuiders = function(guiderArray) {
+    var guiderLen = guiderArray.length;
+		
+    for(var i = 0; i < guiderLen; i++) {
+      var myGuider = guiderArray[i];
+      if(typeof myGuider.buttons !== 'object' || !myGuider.buttons.length) {
+        myGuider.buttons = [];
+      }
+
+      var prevGuider = guiderArray[i - 1];
+      var nextGuider = guiderArray[i + 1];
+
+      for(var j = 0; j < myGuider.buttons.length; j++) {
+        var name = myGuider.buttons[j].name.toLowerCase();
+        if(name === 'next' && 
+           typeof nextGuider === 'object' && 
+           typeof nextGuider.id === 'string' &&
+           typeof myGuider.buttons[j].onclick !== 'function') {
+          myGuider.next = nextGuider.id;
+        }
+        else if(name === 'prev' && 
+                typeof prevGuider === 'object' &&
+                typeof prevGuider.id === 'string' &&
+                typeof myGuider.buttons[j].onclick !== 'function') {
+          myGuider.prev = prevGuider.id;
+        }
+      }
+
+      guiders.createGuider(myGuider);
+	}
+  };
 
   guiders.hideAll = function(omitHidingOverlay, next) {
 	if(typeof next === 'undefined') {
