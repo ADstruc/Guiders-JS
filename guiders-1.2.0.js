@@ -61,6 +61,7 @@ var guiders = (function($) {
   guiders._guiders = {};
   guiders._lastCreatedGuiderID = null;
   guiders._nextButtonTitle = "Next";
+  guiders._prevButtonTitle = "Previous";
   guiders._zIndexForHighlight = 10001;
 
   guiders._addButtons = function(myGuider) {
@@ -91,6 +92,9 @@ var guiders = (function($) {
       } else if (!thisButton.onclick &&
                  thisButton.name.toLowerCase() === guiders._nextButtonTitle.toLowerCase()) { 
         thisButtonElem.bind("click", function() { guiders.next(); });
+      } else if (!thisButton.onclick &&
+                 thisButton.name.toLowerCase() === guiders._prevButtonTitle.toLowerCase()) { 
+        thisButtonElem.bind("click", function() { guiders.prev(); });
       }
     }
   
@@ -296,6 +300,28 @@ var guiders = (function($) {
           guiders._dehighlightElement(currentGuider.highlight);
       }
       guiders.show(nextGuiderId);
+    }
+  };
+  
+  guiders.prev = function() {
+    var currentGuider = guiders._guiders[guiders._currentGuiderID];
+    if (typeof currentGuider === "undefined") {
+      return;
+    }
+    var prevGuiderId = currentGuider.prev || null;
+	if(prevGuiderId.indexOf('url:') === 0) {
+		window.location.href = prevGuiderId.substring(4);
+		return;
+	}
+	
+    if (prevGuiderId !== null && prevGuiderId !== "") {
+      var myGuider = guiders._guiderById(prevGuiderId);
+      var omitHidingOverlay = myGuider.overlay ? true : false;
+      guiders.hideAll(omitHidingOverlay, true);
+      if (currentGuider.highlight) {
+          guiders._dehighlightElement(currentGuider.highlight);
+      }
+      guiders.show(prevGuiderId);
     }
   };
 
