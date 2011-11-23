@@ -91,10 +91,10 @@ var guiders = (function($) {
         thisButtonElem.bind("click", function() { guiders.hideAll(); });
       } else if (!thisButton.onclick &&
                  thisButton.name.toLowerCase() === guiders._nextButtonTitle.toLowerCase()) { 
-        thisButtonElem.bind("click", function() { guiders.next(); });
+        thisButtonElem.bind("click", function() { guiders.goTo('next'); });
       } else if (!thisButton.onclick &&
                  thisButton.name.toLowerCase() === guiders._prevButtonTitle.toLowerCase()) { 
-        thisButtonElem.bind("click", function() { guiders.prev(); });
+        thisButtonElem.bind("click", function() { guiders.goTo('prev'); });
       }
     }
   
@@ -281,50 +281,35 @@ var guiders = (function($) {
     }
   };
 
-  guiders.next = function() {
+  /**
+   * @param where string
+   */
+  guiders.goTo = function(where) {
     var currentGuider = guiders._guiders[guiders._currentGuiderID];
     if (typeof currentGuider === "undefined") {
       return;
     }
-    var nextGuiderId = currentGuider.next || null;
-	if(nextGuiderId.indexOf('url:') === 0) {
-		window.location.href = nextGuiderId.substring(4);
+	
+    var goToGuiderId = currentGuider[where] || null;
+	if(goToGuiderId.indexOf('url:') === 0) {
+		window.location.href = goToGuiderId.substring(4);
 		return;
 	}
 	
-    if (nextGuiderId !== null && nextGuiderId !== "") {
-      var myGuider = guiders._guiderById(nextGuiderId);
-      var omitHidingOverlay = myGuider.overlay ? true : false;
-      guiders.hideAll(omitHidingOverlay, true);
-      if (currentGuider.highlight) {
-          guiders._dehighlightElement(currentGuider.highlight);
-      }
-      guiders.show(nextGuiderId);
+    if (goToGuiderId === null || goToGuiderId === "") {
+		return;
+	}
+
+    var myGuider = guiders._guiderById(goToGuiderId);
+    var omitHidingOverlay = myGuider.overlay ? true : false;
+    guiders.hideAll(omitHidingOverlay, true);
+    if (currentGuider.highlight) {
+	  guiders._dehighlightElement(currentGuider.highlight);
     }
+
+    guiders.show(goToGuiderId);
   };
   
-  guiders.prev = function() {
-    var currentGuider = guiders._guiders[guiders._currentGuiderID];
-    if (typeof currentGuider === "undefined") {
-      return;
-    }
-    var prevGuiderId = currentGuider.prev || null;
-	if(prevGuiderId.indexOf('url:') === 0) {
-		window.location.href = prevGuiderId.substring(4);
-		return;
-	}
-	
-    if (prevGuiderId !== null && prevGuiderId !== "") {
-      var myGuider = guiders._guiderById(prevGuiderId);
-      var omitHidingOverlay = myGuider.overlay ? true : false;
-      guiders.hideAll(omitHidingOverlay, true);
-      if (currentGuider.highlight) {
-          guiders._dehighlightElement(currentGuider.highlight);
-      }
-      guiders.show(prevGuiderId);
-    }
-  };
-
   guiders.createGuider = function(passedSettings) {
     if (passedSettings === null || passedSettings === undefined) {
       passedSettings = {};
