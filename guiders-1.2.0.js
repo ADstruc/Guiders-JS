@@ -132,14 +132,14 @@ var guiders = (function($) {
       return;
     }
     
-    myGuider.attachTo = $(myGuider.attachTo);
-	if(myGuider.attachTo.length < 1) {
+    var attachTo = $(myGuider.attachTo);
+	if(attachTo.length < 1) {
 		return;
 	}
 	
-    var base = myGuider.attachTo.offset();
-    var attachToHeight = myGuider.attachTo.innerHeight();
-    var attachToWidth = myGuider.attachTo.innerWidth();
+    var base = attachTo.offset();
+    var attachToHeight = attachTo.innerHeight();
+    var attachToWidth = attachTo.innerWidth();
     
     var top = base.top;
     var left = base.left;
@@ -464,7 +464,7 @@ var guiders = (function($) {
     if(typeof autoNav === 'undefined') {
       autoNav = true;
     }
-	
+
     var guiderLen = guiderArray.length;
     for(var i = 0; i < guiderLen; i++) {
       var myGuider = guiderArray[i];
