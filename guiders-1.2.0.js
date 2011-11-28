@@ -22,7 +22,7 @@ var guiders = (function($) {
 
   guiders._defaultSettings = {
     attachTo: null,
-    buttons: [{name: "Close"}],
+    buttons: [],
     buttonCustomHTML: "",
     classString: null,
     description: "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
@@ -65,14 +65,20 @@ var guiders = (function($) {
   guiders._prevButtonTitle = "Previous";
   guiders._zIndexForHighlight = 10001;
 
-  guiders._addButtons = function(myGuider) {
+  guiders._addButtons = function(myGuider) {	
     // Add buttons
     var guiderButtonsContainer = myGuider.elem.find(".guider_buttons");
+	
+	//Clear the button container
+	guiderButtonsContainer.empty();
   
     if (myGuider.buttons === null || myGuider.buttons.length === 0) {
       guiderButtonsContainer.remove();
       return;
     }
+	else if(guiderButtonsContainer.length === 0) {
+		guiderButtonsContainer = $('<div></div>', { "class" : "guider_buttons" }).appendTo(myGuider.elem.find('.guider_content'));
+	}
   
     for (var i = myGuider.buttons.length-1; i >= 0; i--) {
       var thisButton = myGuider.buttons[i];
@@ -87,9 +93,7 @@ var guiders = (function($) {
 
       if (thisButton.onclick) {
         thisButtonElem.bind("click", myGuider, thisButton.onclick);
-      } else if(typeof thisButton.name !== 'string') {
-		  //Do nothing
-	  } else if (thisButton.name.toLowerCase() === guiders._closeButtonTitle.toLowerCase()) { 
+      } else if (thisButton.name.toLowerCase() === guiders._closeButtonTitle.toLowerCase()) { 
         thisButtonElem.bind("click", function() {guiders.hideAll();});
       } else if (thisButton.name.toLowerCase() === guiders._nextButtonTitle.toLowerCase()) { 
         thisButtonElem.bind("click", function() {guiders.goTo('next');});
@@ -101,10 +105,6 @@ var guiders = (function($) {
     if (myGuider.buttonCustomHTML !== "") {
       var myCustomHTML = $(myGuider.buttonCustomHTML);
       myGuider.elem.find(".guider_buttons").append(myCustomHTML);
-    }
-  
-    if (myGuider.buttons.length === 0) {
-      guiderButtonsContainer.remove();
     }
   };
 
@@ -284,16 +284,22 @@ var guiders = (function($) {
 
   /**
    * @param where string
+   * 
+   * @return null
    */
   guiders.goTo = function(where) {
     var currentGuider = guiders._guiders[guiders._currentGuiderID];
     if (typeof currentGuider === "undefined") {
-      return;
+      return null;
     }
+	
+	if(currentGuider.live === true) {
+		return guiders.liveGoTo(where);
+	}
     
     var goToGuiderId = currentGuider[where] || null;
     if (goToGuiderId === null || goToGuiderId === "") {
-      return;
+      return null;
     }
 	
 	if(goToGuiderId.indexOf('url:') === 0) {
@@ -306,7 +312,10 @@ var guiders = (function($) {
     if (currentGuider.highlight) {
       guiders._dehighlightElement(currentGuider.highlight);
     }
+	
     guiders.show(goToGuiderId);
+	
+	return null;
   };
   
   /**
@@ -458,20 +467,30 @@ var guiders = (function($) {
    * A way to quickly build an array of guiders, automatically setting next/prev
    * values (as long as there isn't a corresponding onclick function)
    * @param guiderArray array
-   * @param autoNav boolean
+   * @param autoNav *optional* boolean Automatically generate nav elements in a
+   *                                   static manner (if the DOM is changing then
+   *                                   use the live option instead)
+   * @param live *optional* boolean Automatically generate nav elements as guiders
+   *                                are created
    */
-  guiders.createGuiders = function(guiderArray, autoNav) {
-    if(typeof autoNav === 'undefined') {
+  guiders.createGuiders = function(guiderArray, autoNav, live) {
+    if (typeof autoNav === 'undefined') {
       autoNav = true;
+    }
+    if (typeof live === 'undefined') {
+      live = false;
     }
 
     var guiderLen = guiderArray.length;
     for(var i = 0; i < guiderLen; i++) {
       var myGuider = guiderArray[i];
-	  if (autoNav === true) {
+	  myGuider.live = live;
+	  
+	  if (autoNav === true || live === true) {
 		myGuider = guiders._autoNav(myGuider, 
 		                            guiderArray[i + 1], 
-									guiderArray[i - 1]);
+					                guiderArray[i - 1],
+                                    live);
 	  }
 
       //Create the guider
@@ -483,10 +502,15 @@ var guiders = (function($) {
    * @param myGuider object
    * @param nextGuider object
    * @param prevGuider object
+   * @param skipButtons boolean
    * 
    * @return object
    */
-  guiders._autoNav = function(myGuider, nextGuider, prevGuider) {
+  guiders._autoNav = function(myGuider, nextGuider, prevGuider, skipButtons) {
+	  if (typeof skipButtons === 'undefined') {
+		  skipButtons = false;
+	  }
+	  
 	  var hasNext = true,
           hasPrev = true;
 	  if (typeof nextGuider === 'undefined') {
@@ -500,9 +524,26 @@ var guiders = (function($) {
 	  
 	  var customNext = typeof myGuider.next !== 'undefined',
 		  customPrev = typeof myGuider.prev !== 'undefined';
+		  
+      var tmp = {
+		  guider: myGuider,
+		  customNext: customNext,
+		  customPrev: customPrev
+	  };
 	  
-	  //Add buttons on
-	  myGuider = guiders._buildButtons(myGuider, hasNext, hasPrev, nextGuider.id, prevGuider.id, customNext, customPrev);
+	  if(skipButtons !== true) {
+	    //Add buttons on
+	    tmp = guiders._buildButtons(myGuider, hasNext, hasPrev, customNext, customPrev);
+		myGuider = tmp.guider;
+	  }
+	  
+	  //If there are next/previous markers and no custom actions, link the buttons
+	  if(hasNext && !tmp.customNext) {
+		  myGuider.next = nextGuider.id;
+	  }
+	  if(hasPrev && !tmp.customPrev) {
+		  myGuider.prev = prevGuider.id;
+	  }
 	  
 	  return myGuider;
   };
@@ -511,14 +552,12 @@ var guiders = (function($) {
    * @param myGuider object
    * @param hasNext boolean
    * @param hasPrev boolean
-   * @param nextId *optional* string
-   * @param prevId *optional* string
    * @param customNext *optional* boolean
    * @param customPrev *optional* boolean
    * 
    * @return object
    */
-  guiders._buildButtons = function(myGuider, hasNext, hasPrev, nextId, prevId, customNext, customPrev) {
+  guiders._buildButtons = function(myGuider, hasNext, hasPrev, customNext, customPrev) {	  
 	  var hasCloseButton = 
 		  hasNextButton = 
 		  hasPrevButton = false;
@@ -531,6 +570,7 @@ var guiders = (function($) {
       for(var j = 0; j < buttonLen; j++) {
         var name = myGuider.buttons[j].name.toLowerCase(),
 		    customOnClick = typeof myGuider.buttons[j].onclick === 'function',
+			isClose = false,
 			isNext = false,
 			isPrev = false;
 
@@ -554,15 +594,10 @@ var guiders = (function($) {
         else if(isPrev && !customPrev && !hasPrev) {
             myGuider.buttons.splice(j, 1);j--;buttonLen--; //Remove elem and reset incrementors
         }
+		else if(isClose && hasNext) {
+			myGuider.buttons.splice(j, 1);j--;buttonLen--; //Remove elem and reset incrementors
+		}
       }
-	  
-	  //If there are next/previous markers and no custom actions, link the buttons
-	  if(hasNext && !customNext) {
-		  myGuider.next = nextId;
-	  }
-	  if(hasPrev && !customPrev) {
-		  myGuider.prev = prevId;
-	  }
 	  
       //If there are missing nav buttons, add them
       if(hasPrevButton === false && hasPrev === true) {
@@ -575,7 +610,13 @@ var guiders = (function($) {
         myGuider.buttons.push({name: guiders._closeButtonTitle});
       }
 	  
-	  return myGuider;
+	  var tmp = {
+		  guider: myGuider,
+		  customNext: customNext,
+		  customPrev: customPrev
+	  };
+	  
+	  return tmp;
   };
 
   guiders.hideAll = function(omitHidingOverlay, next) {
@@ -615,6 +656,17 @@ var guiders = (function($) {
     if (myGuider.onShow) {
       myGuider.onShow(myGuider);
     }
+	
+	guiders._currentGuiderID = id;
+	
+	if (myGuider.live === true) {
+		var tmp = guiders._buildButtons(myGuider, guiders.liveHas('next'), guiders.liveHas('prev'));
+		myGuider = tmp.guider;
+		
+		console.log(myGuider.buttons);
+		
+		guiders._addButtons(myGuider);
+	}
   
     guiders._attach(myGuider);
   
@@ -629,8 +681,7 @@ var guiders = (function($) {
         guiderOffset.top + guiderElemHeight + 40 > scrollHeight + windowHeight) {
       window.scrollTo(0, Math.max(guiderOffset.top + (guiderElemHeight / 2) - (windowHeight / 2), 0));
     }
-  
-    guiders._currentGuiderID = id;
+	
     return guiders;
   };
   
