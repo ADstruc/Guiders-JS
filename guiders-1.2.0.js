@@ -38,7 +38,8 @@ var guiders = (function($) {
     position: 0, // 1-12 follows an analog clock, 0 means centered
     title: "Sample title goes here",
     width: 400,
-    xButton: true // this places a closer "x" button in the top right of the guider
+    xButton: true, // this places a closer "x" button in the top right of the guider
+	live: false
   };
 
   guiders._htmlSkeleton = [
@@ -77,7 +78,7 @@ var guiders = (function($) {
       var thisButton = myGuider.buttons[i];
       var thisButtonElem = $("<a></a>", {
                               "class" : "guider_button",
-                              "text" : thisButton.name });
+                              "text" : thisButton.name});
       if (typeof thisButton.classString !== "undefined" && thisButton.classString !== null) {
         thisButtonElem.addClass(thisButton.classString);
       }
@@ -86,15 +87,12 @@ var guiders = (function($) {
   
       if (thisButton.onclick) {
         thisButtonElem.bind("click", myGuider, thisButton.onclick);
-      } else if (!thisButton.onclick &&
-                 thisButton.name.toLowerCase() === guiders._closeButtonTitle.toLowerCase()) { 
-        thisButtonElem.bind("click", function() { guiders.hideAll(); });
-      } else if (!thisButton.onclick &&
-                 thisButton.name.toLowerCase() === guiders._nextButtonTitle.toLowerCase()) { 
-        thisButtonElem.bind("click", function() { guiders.next(); });
-      } else if (!thisButton.onclick &&
-                 thisButton.name.toLowerCase() === guiders._prevButtonTitle.toLowerCase()) { 
-        thisButtonElem.bind("click", function() { guiders.prev(); });
+      } else if (thisButton.name.toLowerCase() === guiders._closeButtonTitle.toLowerCase()) { 
+        thisButtonElem.bind("click", function() {guiders.hideAll();});
+      } else if (thisButton.name.toLowerCase() === guiders._nextButtonTitle.toLowerCase()) { 
+        thisButtonElem.bind("click", function() {guiders.goTo('next');});
+      } else if (thisButton.name.toLowerCase() === guiders._prevButtonTitle.toLowerCase()) { 
+        thisButtonElem.bind("click", function() {guiders.goTo('prev');});
       }
     }
   
@@ -103,18 +101,18 @@ var guiders = (function($) {
       myGuider.elem.find(".guider_buttons").append(myCustomHTML);
     }
   
-		if (myGuider.buttons.length == 0) {
-			guiderButtonsContainer.remove();
-		}
+    if (myGuider.buttons.length === 0) {
+      guiderButtonsContainer.remove();
+    }
   };
 
   guiders._addXButton = function(myGuider) {
       var xButtonContainer = myGuider.elem.find(".guider_close");
       var xButton = $("<div></div>", {
                       "class" : "x_button",
-                      "role" : "button" });
+                      "role" : "button"});
       xButtonContainer.append(xButton);
-      xButton.click(function() { guiders.hideAll(); });
+      xButton.click(function() {guiders.hideAll();});
   };
 
   guiders._attach = function(myGuider) {
@@ -255,7 +253,8 @@ var guiders = (function($) {
       11: ["left", arrowOffset],
       12: ["left", myWidth/2 - arrowOffset]
     };
-    var position = positionMap[myGuider.position];
+	
+    position = positionMap[myGuider.position];
     myGuiderArrow.css(position[0], position[1] + "px");
   };
 
@@ -280,49 +279,120 @@ var guiders = (function($) {
       }
     }
   };
-
-  guiders.next = function() {
+  
+  guiders.goTo = function(where) {
     var currentGuider = guiders._guiders[guiders._currentGuiderID];
     if (typeof currentGuider === "undefined") {
       return;
     }
-    var nextGuiderId = currentGuider.next || null;
-	if(nextGuiderId.indexOf('url:') === 0) {
-		window.location.href = nextGuiderId.substring(4);
-		return;
+    
+    var goToGuiderId = currentGuider[where] || null;
+    if (goToGuiderId === null || goToGuiderId === "") {
+      return;
+    }
+	
+	if(goToGuiderId.indexOf('url:') === 0) {
+      window.location.href = goToGuiderId.substring(4);
 	}
 	
-    if (nextGuiderId !== null && nextGuiderId !== "") {
-      var myGuider = guiders._guiderById(nextGuiderId);
-      var omitHidingOverlay = myGuider.overlay ? true : false;
-      guiders.hideAll(omitHidingOverlay, true);
-      if (currentGuider.highlight) {
-          guiders._dehighlightElement(currentGuider.highlight);
-      }
-      guiders.show(nextGuiderId);
+    var myGuider = guiders._guiderById(goToGuiderId);
+    var omitHidingOverlay = myGuider.overlay ? true : false;
+    guiders.hideAll(omitHidingOverlay, true);
+    if (currentGuider.highlight) {
+      guiders._dehighlightElement(currentGuider.highlight);
     }
+    guiders.show(goToGuiderId);
   };
   
-  guiders.prev = function() {
-    var currentGuider = guiders._guiders[guiders._currentGuiderID];
-    if (typeof currentGuider === "undefined") {
-      return;
-    }
-    var prevGuiderId = currentGuider.prev || null;
-	if(prevGuiderId.indexOf('url:') === 0) {
-		window.location.href = prevGuiderId.substring(4);
-		return;
+  /**
+   * @param where string
+   * @param searchFrom string
+   * 
+   * @return boolean
+   */
+  guiders.liveHas = function(where, searchFrom) {
+    var currentGuider;
+    if(typeof searchFrom === 'undefined') {
+		currentGuider = guiders._guiders[guiders._currentGuiderID] || null;
+	}
+	else {
+		currentGuider = guiders._guiders[searchFrom] || null;
 	}
 	
-    if (prevGuiderId !== null && prevGuiderId !== "") {
-      var myGuider = guiders._guiderById(prevGuiderId);
-      var omitHidingOverlay = myGuider.overlay ? true : false;
-      guiders.hideAll(omitHidingOverlay, true);
-      if (currentGuider.highlight) {
-          guiders._dehighlightElement(currentGuider.highlight);
-      }
-      guiders.show(prevGuiderId);
+	if (currentGuider === null) {
+      return false;
     }
+	
+	var goToGuiderId = currentGuider[where] || null;
+	
+	if (goToGuiderId === null || goToGuiderId === '') {
+		return false;
+	}
+	
+	var goToGuider = guiders._guiders[goToGuiderId];
+	
+	if (typeof goToGuider !== 'object') {
+		return false;
+	}
+	
+	if (goToGuider.position === 0) {
+		return true;
+	}
+	
+	if (!$(goToGuider.attachTo).is(':visible')) {
+		return guiders.liveHas(where, goToGuider.id);
+	}
+	
+	return true;
+  };
+  
+  /**
+   * @param where string
+   * @param searchFrom *optional* string
+   * 
+   * @return null
+   */
+  guiders.liveGoTo = function(where, searchFrom) {
+    var currentGuider;
+    if(typeof searchFrom === 'undefined') {
+		currentGuider = guiders._guiders[guiders._currentGuiderID] || null;
+	}
+	else {
+		currentGuider = guiders._guiders[searchFrom] || null;
+	}
+	
+	if (currentGuider === null) {
+      return null;
+    }
+	
+	var goToGuiderId = currentGuider[where] || null;
+	
+	if (goToGuiderId === null || goToGuiderId === '') {
+		return null;
+	}
+	
+	if(goToGuiderId.indexOf('url:') === 0) {
+      window.location.href = goToGuiderId.substring(4);
+	}
+	
+	var goToGuider = guiders._guiders[goToGuiderId];
+	
+	if (typeof goToGuider !== 'object') {
+		return null;
+	}
+	
+	if (goToGuider.position !== 0 && !$(goToGuider.attachTo).is(':visible')) {
+		return guiders.liveGoTo(where, goToGuider.id);
+	}
+	
+    var omitHidingOverlay = goToGuider.overlay ? true : false;
+    guiders.hideAll(omitHidingOverlay, true);
+    if (currentGuider.highlight) {
+      guiders._dehighlightElement(currentGuider.highlight);
+    }
+    guiders.show(goToGuiderId);
+	
+	return null;
   };
 
   guiders.createGuider = function(passedSettings) {
@@ -331,7 +401,7 @@ var guiders = (function($) {
     }
     
     // Extend those settings with passedSettings
-    myGuider = $.extend({}, guiders._defaultSettings, passedSettings);
+    var myGuider = $.extend({}, guiders._defaultSettings, passedSettings);
     myGuider.id = myGuider.id || String(Math.floor(Math.random() * 1000));
     
     var guiderElement = $(guiders._htmlSkeleton);
@@ -393,30 +463,67 @@ var guiders = (function($) {
     var guiderLen = guiderArray.length;
     for(var i = 0; i < guiderLen; i++) {
       var myGuider = guiderArray[i];
-      //If we're not auto generating the nav, just add the guider and continue
-      if(autoNav === false) {
-        guiders.createGuider(myGuider);
-        continue;
-      }
-      
-      if(typeof myGuider.buttons !== 'object' || !myGuider.buttons.length) {
+	  if (autoNav === true) {
+        var prevGuider = guiderArray[i - 1],
+		    nextGuider = guiderArray[i + 1];
+        
+		myGuider = guiders._autoNav(myGuider, nextGuider, prevGuider);
+	  }
+
+      //Create the guider
+      guiders.createGuider(myGuider);
+	}
+  };
+  
+  /**
+   * @param myGuider object
+   * @param nextGuider object
+   * @param prevGuider object
+   * 
+   * @return object
+   */
+  guiders._autoNav = function(myGuider, nextGuider, prevGuider) {
+	  var hasNext = true,
+          hasPrev = true;
+	  if (typeof nextGuider === 'undefined') {
+		  nextGuider = {};
+		  hasNext = false;
+	  }
+	  if (typeof prevGuider === 'undefined') {
+		  prevGuider = {};
+		  hasPrev = false;
+	  }
+	  
+	  var customNext = typeof myGuider.next !== 'undefined',
+		  customPrev = typeof myGuider.prev !== 'undefined';
+	  
+	  //Add buttons on
+	  myGuider = guiders._buildButtons(myGuider, hasNext, hasPrev, nextGuider.id, prevGuider.id, customNext, customPrev);
+	  
+	  return myGuider;
+  };
+  
+  /**
+   * @param myGuider object
+   * @param hasNext boolean
+   * @param hasPrev boolean
+   * @param nextId *optional* string
+   * @param prevId *optional* string
+   * @param customNext *optional* boolean
+   * @param customPrev *optional* boolean
+   * 
+   * @return object
+   */
+  guiders._buildButtons = function(myGuider, hasNext, hasPrev, nextId, prevId, customNext, customPrev) {
+	  var hasCloseButton = 
+		  hasNextButton = 
+		  hasPrevButton = false;
+	  
+	  if(typeof myGuider.buttons !== 'object' || !myGuider.buttons.length) {
         myGuider.buttons = [];
       }
-
-      var prevGuider = guiderArray[i - 1],
-          nextGuider = guiderArray[i + 1],
 	  
-	      hasNext = typeof nextGuider === 'object' && typeof nextGuider.id === 'string',
-	      hasPrev = typeof prevGuider === 'object' && typeof prevGuider.id === 'string',
-
-		  customNext = typeof myGuider.next !== 'undefined',
-		  customPrev = typeof myGuider.prev !== 'undefined',
-
-	      hasCloseButton = false,
-          hasNextButton = false,
-          hasPrevButton = false;
-
-      var buttonLen = myGuider.buttons.length;
+	  var buttonLen = myGuider.buttons.length;
       for(var j = 0; j < buttonLen; j++) {
         var name = myGuider.buttons[j].name.toLowerCase(),
 		    customOnClick = typeof myGuider.buttons[j].onclick === 'function',
@@ -447,10 +554,10 @@ var guiders = (function($) {
 	  
 	  //If there are next/previous markers and no custom actions, link the buttons
 	  if(hasNext && !customNext) {
-		  myGuider.next = nextGuider.id;
+		  myGuider.next = nextId;
 	  }
 	  if(hasPrev && !customPrev) {
-		  myGuider.prev = prevGuider.id;
+		  myGuider.prev = prevId;
 	  }
 	  
       //If there are missing nav buttons, add them
@@ -463,10 +570,8 @@ var guiders = (function($) {
       if(hasCloseButton === false && hasNext === false) {
         myGuider.buttons.push({name: 'Close'});
       }
-
-      //Create the guider
-      guiders.createGuider(myGuider);
-	}
+	  
+	  return myGuider;
   };
 
   guiders.hideAll = function(omitHidingOverlay, next) {
