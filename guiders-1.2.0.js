@@ -662,9 +662,6 @@ var guiders = (function($) {
 	if (myGuider.live === true) {
 		var tmp = guiders._buildButtons(myGuider, guiders.liveHas('next'), guiders.liveHas('prev'));
 		myGuider = tmp.guider;
-		
-		console.log(myGuider.buttons);
-		
 		guiders._addButtons(myGuider);
 	}
   
