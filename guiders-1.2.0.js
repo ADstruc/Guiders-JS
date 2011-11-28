@@ -281,7 +281,10 @@ var guiders = (function($) {
       }
     }
   };
-  
+
+  /**
+   * @param where string
+   */
   guiders.goTo = function(where) {
     var currentGuider = guiders._guiders[guiders._currentGuiderID];
     if (typeof currentGuider === "undefined") {
@@ -396,7 +399,7 @@ var guiders = (function($) {
 	
 	return null;
   };
-
+  
   guiders.createGuider = function(passedSettings) {
     if (passedSettings === null || passedSettings === undefined) {
       passedSettings = {};
@@ -569,7 +572,7 @@ var guiders = (function($) {
 		  myGuider.buttons.push({name: guiders._nextButtonTitle});
 	  }
       if(hasCloseButton === false && hasNext === false) {
-        myGuider.buttons.push({name: guiders._CloseButtonTitle});
+        myGuider.buttons.push({name: guiders._closeButtonTitle});
       }
 	  
 	  return myGuider;
