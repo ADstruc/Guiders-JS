@@ -48,6 +48,7 @@ var guiders = (function($) {
     "    <h1 class='guider_title'></h1>",
     "    <div class='guider_close'></div>",
     "    <p class='guider_description'></p>",
+    "    <ul class='guider_progress'></ul>",
     "    <div class='guider_buttons'>",
     "    </div>",
     "  </div>",
@@ -94,11 +95,11 @@ var guiders = (function($) {
       if (thisButton.onclick) {
         thisButtonElem.bind("click", myGuider, thisButton.onclick);
       } else if (thisButton.name.toLowerCase() === guiders._closeButtonTitle.toLowerCase()) { 
-        thisButtonElem.bind("click", function() {guiders.hideAll();});
+        thisButtonElem.bind("click", function() {guiders.hideAll();}).addClass("orange-btn");
       } else if (thisButton.name.toLowerCase() === guiders._nextButtonTitle.toLowerCase()) { 
-        thisButtonElem.bind("click", function() {guiders.goTo('next');});
+        thisButtonElem.bind("click", function() {guiders.goTo('next');}).addClass("orange-btn");
       } else if (thisButton.name.toLowerCase() === guiders._prevButtonTitle.toLowerCase()) { 
-        thisButtonElem.bind("click", function() {guiders.goTo('prev');});
+        thisButtonElem.bind("click", function() {guiders.goTo('prev');}).addClass("grey-btn");
       }
     }
   
@@ -164,7 +165,7 @@ var guiders = (function($) {
     offset = offsetMap[myGuider.position];
     top   += offset[0];
     left  += offset[1];
-    
+
     if (myGuider.offset.top !== null) {
       top += myGuider.offset.top;
     }
@@ -427,8 +428,18 @@ var guiders = (function($) {
     
     var guiderTitleContainer = guiderElement.find(".guider_title");
     guiderTitleContainer.html(myGuider.title);
-    
+        
     guiderElement.find(".guider_description").html(myGuider.description);
+    
+    var guiderProgressContainer = guiderElement.find(".guider_progress");
+    
+    if (myGuider.showProgress) {
+        for (var i = 0; i < myGuider.guidersLength; i++) {           
+            guiderProgressContainer.append('<li' + (myGuider.guiderIndex === i ? ' class="selected"' : '') + '>');
+        }        
+    } else {
+        guiderProgressContainer.remove();
+    }
     
     guiders._addButtons(myGuider);
     
@@ -484,7 +495,11 @@ var guiders = (function($) {
     var guiderLen = guiderArray.length;
     for(var i = 0; i < guiderLen; i++) {
       var myGuider = guiderArray[i];
-	  myGuider.live = live;
+	  
+      myGuider.guiderIndex   = i;
+      myGuider.guidersLength = guiderLen;
+      
+      myGuider.live = live;      
 	  
 	  if (autoNav === true || live === true) {
 		myGuider = guiders._autoNav(myGuider, 
@@ -563,44 +578,45 @@ var guiders = (function($) {
 		  hasPrevButton = false;
 	  
 	  if(typeof myGuider.buttons !== 'object' || !myGuider.buttons.length) {
-        myGuider.buttons = [];
-      }
+      myGuider.buttons = [];
+    }
 	  
-	  var buttonLen = myGuider.buttons.length;
-      for(var j = 0; j < buttonLen; j++) {
-        var name = myGuider.buttons[j].name.toLowerCase(),
-		    customOnClick = typeof myGuider.buttons[j].onclick === 'function',
+	var buttonLen = myGuider.buttons.length;
+      
+    for(var j = 0; j < buttonLen; j++) {
+      var name = myGuider.buttons[j].name.toLowerCase(),
+	    customOnClick = typeof myGuider.buttons[j].onclick === 'function',
 			isClose = false,
 			isNext = false,
 			isPrev = false;
 
-		//Check and see if this guider already has next/prev/close buttons
-        if(name === guiders._closeButtonTitle.toLowerCase()) {
-          hasCloseButton = isClose = true;
-		}
-		else if(name === guiders._nextButtonTitle.toLowerCase()) {
-          hasNextButton = isNext = true;
-		  customNext = customNext || customOnClick;
-		}
-		else if(name === guiders._prevButtonTitle.toLowerCase()) {
-          hasPrevButton = isPrev = true;
-		  customPrev = customPrev || customOnClick;
-		}
+	    //Check and see if this guider already has next/prev/close buttons
+      if(name === guiders._closeButtonTitle.toLowerCase()) {
+        hasCloseButton = isClose = true;
+  		}
+  		else if(name === guiders._nextButtonTitle.toLowerCase()) {
+        hasNextButton = isNext = true;
+  		  customNext = customNext || customOnClick;
+  		}
+  		else if(name === guiders._prevButtonTitle.toLowerCase()) {
+        hasPrevButton = isPrev = true;
+  		  customPrev = customPrev || customOnClick;
+  		}
 
-        //In case there aren't actually next/prev guiders, remove the buttons
-        if(isNext && !customNext && !hasNext) {
-            myGuider.buttons.splice(j, 1);j--;buttonLen--; //Remove elem and reset incrementors
-        }
-        else if(isPrev && !customPrev && !hasPrev) {
-            myGuider.buttons.splice(j, 1);j--;buttonLen--; //Remove elem and reset incrementors
-        }
-		else if(isClose && hasNext) {
-			myGuider.buttons.splice(j, 1);j--;buttonLen--; //Remove elem and reset incrementors
-		}
+      //In case there aren't actually next/prev guiders, remove the buttons
+      if(isNext && !customNext && !hasNext) {
+        myGuider.buttons.splice(j, 1);j--;buttonLen--; //Remove elem and reset incrementors
       }
-	  
-      //If there are missing nav buttons, add them
-      if(hasPrevButton === false && hasPrev === true) {
+      else if(isPrev && !customPrev && !hasPrev) {
+        myGuider.buttons.splice(j, 1);j--;buttonLen--; //Remove elem and reset incrementors
+      }
+  		else if(isClose && hasNext) {
+  			myGuider.buttons.splice(j, 1);j--;buttonLen--; //Remove elem and reset incrementors
+  		}
+    }
+  
+    //If there are missing nav buttons, add them
+    if(hasPrevButton === false && hasPrev === true) {
 		  myGuider.buttons.push({name: guiders._prevButtonTitle});
 	  }
       if(hasNextButton === false && hasNext === true) {
@@ -608,7 +624,7 @@ var guiders = (function($) {
 	  }
       if(hasCloseButton === false && hasNext === false) {
         myGuider.buttons.push({name: guiders._closeButtonTitle});
-      }
+    }
 	  
 	  var tmp = {
 		  guider: myGuider,
